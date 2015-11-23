@@ -78,6 +78,57 @@ mon_data    = ksdensity(mon_data,mon_data,'function','cdf');
 %ttm_grid = unique(ttm_data);
 %iv_grid  = unique(iv_data);
 
+%OBTAIN THE SCALED MONEYNESS
+%(1) Calculate average volatilities
+IVT = [];
+for i = 1:T
+    if i == T
+        TTM_Jt = ttm_data(matnum(i)+1:end);
+        IV_Jt  = iv_data(matnum(i)+1:end);
+        ttmnum = [0; find(diff(TTM_Jt) ~= 0)];
+        Tt     = length(ttmnum);
+        ivt = [];
+        for j = 1:Tt            
+            if j == Tt
+                iv_Tt  = IV_Jt(ttmnum(j)+1:end);
+                mivt   = mean(iv_Tt);
+                repivt = ones(length(iv_Tt),1).*mivt;
+            else
+                iv_Tt  = IV_Jt(ttmnum(j)+1:ttmnum(j+1));
+                mivt   = mean(iv_Tt);
+                repivt = ones(length(iv_Tt),1).*mivt;
+            end
+            ivt = [ivt;repivt];
+        end        
+    else       
+        TTM_Jt = ttm_data(matnum(i)+1:matnum(i+1));
+        IV_Jt  = iv_data(matnum(i)+1:matnum(i+1));
+        ttmnum = [0; find(diff(TTM_Jt) ~= 0)];
+        Tt     = length(ttmnum);
+        ivt = [];
+        for j = 1:Tt            
+            if j == Tt
+                iv_Tt  = IV_Jt(ttmnum(j)+1:end);
+                mivt   = mean(iv_Tt);
+                repivt = ones(length(iv_Tt),1).*mivt;
+            else
+                iv_Tt  = IV_Jt(ttmnum(j)+1:ttmnum(j+1));
+                mivt   = mean(iv_Tt);
+                repivt = ones(length(iv_Tt),1).*mivt;
+            end
+            ivt = [ivt;repivt];
+        end
+
+    end
+    IVT = [IVT;ivt];
+end
+
+%(2) Do moneyness scaling
+sc_mon_data = exp( (-beta1*(beta1 - 1).*IVT.*ttm_data) + beta1.*log(mon_data) );
+sc_mon_data = ksdensity(sc_mon_data,sc_mon_data,'function','cdf');
+
+mon_data    = sc_mon_data;
+
 %Produce knots' sequences for B-spline estimation
 %knots_mon      = aptknt(mon_grid,K);
 %knots_mon      = [min(mon_data),min(mon_data),min(mon_data):10:max(mon_data),max(mon_data),max(mon_data)];
