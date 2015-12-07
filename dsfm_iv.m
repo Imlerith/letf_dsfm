@@ -7,14 +7,16 @@ function [ dsfmobj ] = dsfm_iv(IV,Km,Kt,Zeta_start,dim_mon,dim_ttm,ikmon,ikttm,t
 
 IV = IVDATA;
 
-ttm_data    = IV(:,1);
-mon_data    = IV(:,2);
-date_data   = IV(:,4);
+ttm_data    = IVDATA(:,1);
+mon_data    = IVDATA(:,2);
+date_data   = IVDATA(:,4);
 
 Dates       = unique(date_data);
 DatNum      = datenum(date_data); 
 matnum      = [0; find(diff(DatNum) ~= 0)];
 T           = length(matnum);
+
+T = T+1;
 
 %delete the duplicates
 IVCLEAN = [];
@@ -29,7 +31,7 @@ for i = 1:T
         TTM_Jt = ttm_data(ind);
     end
     
-    DataMtx  = IV(ind,:); 
+    DataMtx  = IVDATA(ind,:); 
     intmtn   = [0; find(diff(TTM_Jt) ~= 0)];
     DUMTX    = [];
     
@@ -68,9 +70,17 @@ DatNum      = datenum(date_data);
 matnum      = [0; find(diff(DatNum) ~= 0)];
 T           = length(matnum);
 
-%marginally transformed data
-ttm_data    = ksdensity(ttm_data,ttm_data,'function','cdf');
-mon_data    = ksdensity(mon_data,mon_data,'function','cdf');
+% data mapped to (0,1)-interval
+tmin     = min(ttm_data);
+tmax     = max(ttm_data);
+ttm_data = (ttm_data - tmin) / (tmax - tmin);
+mmin     = min(mon_data);
+mmax     = max(mon_data);
+mon_data = (mon_data - mmin) / (mmax - mmin);
+
+% marginally transformed data
+% ttm_data    = ksdensity(ttm_data,ttm_data,'function','cdf');
+% mon_data    = ksdensity(mon_data,mon_data,'function','cdf');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -118,7 +128,6 @@ for i = 1:T
             end
             ivt = [ivt;repivt];
         end
-
     end
     IVT = [IVT;ivt];
 end
